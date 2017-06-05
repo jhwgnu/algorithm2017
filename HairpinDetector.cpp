@@ -36,14 +36,14 @@ static int MIN_hairpin = 200;
 static int MAX_hairpin = 400;
 static int MAX_loop = 50;
 	
-int main() {
+int main(int argc, char** argv) {
 //	cout<< "compile test"<<endl;
 	int s1,e1,s2,e2,cand_start,cand_end;
 	pair<int, int> cand_region;
 	
 //	CREATE_RANDOM_SEQ();
-
-	ifstream ifs("DNAseq.fasta");
+	ifstream ifs(argv[1]);
+	// ifstream ifs("DNAseq.fasta");
 //	cout << "DNAseq.fasta" << endl << endl;
 	string headLine;
 	getline(ifs, headLine);
