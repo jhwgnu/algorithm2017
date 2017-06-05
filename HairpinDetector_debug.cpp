@@ -16,8 +16,8 @@ void FIND_HAIRPIN(int, int, int, int, int, int);
 pair<int**, int**> LCS_LENGTH(string, string);
 void PRINT_LCS(int**, string, string, int, int, string*, string*);
 pair<string, string> ALIGN(string, string);
-pair<int, int> CHECK_OUTER_PART(string, string, string, int);
-pair<int, int> CHECK_INNER_PART(string, string, string, int);
+pair<int, int> CHECK_OUTER_PART(string, string, string, int, string*);
+pair<int, int> CHECK_INNER_PART(string, string, string, int, string*);
 //bool CHECK_LENGTH
 
 string seq = "";
@@ -95,13 +95,19 @@ void FIND_HAIRPIN(int cs, int ce, int s1, int e1, int s2, int e2){
 	cout << "SR_R: " << SR_R << endl;	
 	cout << endl;
 	
+	string *LCS_left = new string;
+	string *LCS_right = new string;
+	*LCS_left = "";
+	*LCS_right = "";
+	cout << "test" << endl;
+	
 	cout << endl << "##Check outer part" << endl;
 	pair<string, string> outer_LCS = ALIGN(SL,SR_R);
 	string SL_aligned = outer_LCS.first;
 	string SR_R_aligned = outer_LCS.second;				
 	cout << "SL_aligned:   " << SL_aligned << endl;	
 	cout << "SR_R_aligned: " << SR_R_aligned << endl;	
-	pair<int,int> outer_part = CHECK_OUTER_PART(SL_aligned, SR_R_aligned, KMER, s1);
+	pair<int,int> outer_part = CHECK_OUTER_PART(SL_aligned, SR_R_aligned, KMER, s1, LCS_left);
 	int leftarm_left = outer_part.first;
 	int rightarm_right = outer_part.second;	
 	
@@ -111,9 +117,12 @@ void FIND_HAIRPIN(int cs, int ce, int s1, int e1, int s2, int e2){
 	string SM_R_aligned = inner_LCS.second;				
 	cout << "SM_aligned:   " << SM_aligned << endl;	
 	cout << "SM_R_aligned: " << SM_R_aligned << endl;	
-	pair<int,int> inner_part = CHECK_INNER_PART(SM_aligned, SM_R_aligned, KMER, e1);
+	pair<int,int> inner_part = CHECK_INNER_PART(SM_aligned, SM_R_aligned, KMER, e1, LCS_right);
 	int leftarm_right = inner_part.first;
 	int rightarm_left = inner_part.second;
+	
+	cout << "[DEBUG] LCS_left : " << *LCS_left << endl;
+	cout << "[DEBUG] LCS_right : " << *LCS_right << endl;
 
 	cout << "leftarm_left = " << leftarm_left << endl;
 	cout << "rightarm_right = " << rightarm_right << endl;		
@@ -145,13 +154,13 @@ void FIND_HAIRPIN(int cs, int ce, int s1, int e1, int s2, int e2){
 	cout << "loop: " << seq.substr(e1+leftarm_right+1, loop_length) << endl;
 }
 
-pair<int, int> CHECK_INNER_PART(string s1, string s2, string kmer, int kmer_end){	
+pair<int, int> CHECK_INNER_PART(string s1, string s2, string kmer, int kmer_end, string* LCS_right){	
 	string SM_aligned = s1;
 	string SM_R_aligned = s2;
 	int leftarm_right = 0;
 	int rightarm_left = 0;
 	
-	string LCS_right = "";
+//	string LCS_right = "";
 	
 	bool stop_pos_found = false;
 	int recent_match = -1; 
@@ -207,21 +216,21 @@ pair<int, int> CHECK_INNER_PART(string s1, string s2, string kmer, int kmer_end)
 			if(s2[i] != '-') rightarm_left++;
 		}
 		for(i=k; i<=recent_match; i++){
-			if(s1[i] == s2[i]) LCS_right += s1[i];
+			if(s1[i] == s2[i]) *LCS_right += s1[i];
 		}
-		cout << "LCS_right: " << LCS_right << endl;
+		cout << "LCS_right: " << *LCS_right << endl;
 		return make_pair(leftarm_right,rightarm_left);
 	} else return make_pair(0,0);
 	
 }
 
-pair<int, int> CHECK_OUTER_PART(string s1, string s2, string kmer, int kmer_start){	
+pair<int, int> CHECK_OUTER_PART(string s1, string s2, string kmer, int kmer_start, string* LCS_left){	
 	string SL_aligned = s1;
 	string SR_R_aligned = s2;
 	int leftarm_left = 0;
 	int rightarm_right = 0;
 	
-	string LCS_left = "";
+//	string LCS_left = "";
 		
 	int recent_match = -1;	
 	bool stop_pos_found = false;
@@ -279,14 +288,14 @@ pair<int, int> CHECK_OUTER_PART(string s1, string s2, string kmer, int kmer_star
 			if(SR_R_aligned[i] != '-') rightarm_right++;
 		}
 		
-		cout << "LCS_left: " << LCS_left << endl;
+		cout << "LCS_left: " << *LCS_left << endl;
 		for(i=recent_match; i<SR_R_aligned.length(); i++){
 			cout << "[DEBUG] " << i;			
 			printf("[DEBUG] SL_aligned[i] = %c ",SL_aligned[i]);
 			printf("[DEBUG] SR_R_aligned[i] = %c\n",SR_R_aligned[i]);
-			if(SL_aligned[i] == SR_R_aligned[i]) LCS_left += SL_aligned[i];
+			if(SL_aligned[i] == SR_R_aligned[i]) *LCS_left += SL_aligned[i];
 		}
-		cout << "LCS_left: " << LCS_left << endl;
+		cout << "LCS_left: " << *LCS_left << endl;
 //		cout << "leftarm_left = " << leftarm_left << endl;
 //		cout << "rightarm_right = " << rightarm_right << endl;
 		return make_pair(leftarm_left, rightarm_right);
