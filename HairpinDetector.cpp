@@ -15,15 +15,18 @@ void PRINT_IF_HAIRPIN(int, int, int, int, int, int);
 pair<int**, int**> LCS_LENGTH(string, string);
 void PRINT_LCS(int**, string, string, int, int, string*, string*);
 pair<string, string> ALIGN(string, string);
-int STOP_POSITION(string, string);
+int STOP_POSITION(string, string, string);
 
 string seq = "";
 
-int N = 500;
-int k = 5;
-int MIN_hairpin = 40;
-int MAX_hairpin = 50;
-int MAX_loop = 20;
+static int N = 10000;
+static int k = 8;
+static int a = 4;
+static int b = 9;
+static int MIN_hairpin = 40;
+static int MAX_hairpin = 50;
+static int MAX_loop = 20;
+
 	
 int main() {
 
@@ -31,8 +34,7 @@ int main() {
 	pair<int, int> cand_region;
 	
 	CREATE_RANDOM_SEQ();		
-	
-	
+		
 	for(s1=0; s1<=N-2*k; s1++){
 		e1 = s1+k-1;
 		s2 = FIND_PALINDROME(s1);
@@ -46,8 +48,6 @@ int main() {
 		PRINT_IF_HAIRPIN(cand_start, cand_end, s1, e1, s2, e2);		
 	}
 }
-
-
 
 
 void PRINT_IF_HAIRPIN(int cs, int ce, int s1, int e1, int s2, int e2){
@@ -77,11 +77,53 @@ void PRINT_IF_HAIRPIN(int cs, int ce, int s1, int e1, int s2, int e2){
 	string SL_aligned = outer_LCS.first;
 	string SR_R_aligned = outer_LCS.second;		
 	
+	cout << endl;
 	cout << "SL_aligned:   " << SL_aligned << endl;	
 	cout << "SR_R_aligned: " << SR_R_aligned << endl;	
 	
+	int STOP_POS = STOP_POSITION(SL_aligned, SR_R_aligned, KMER);
+	
 	cout <<endl<<endl;	
 	return;
+}
+
+int STOP_POSITION(string s1, string s2, string kmer){	
+	cout << endl;
+	int pos = s1.length()-2;
+	s1.append(kmer);
+	s2.append(kmer);
+	cout << "SL_aligned_appended:   " << s1 << endl;
+	cout << "SR_R_aligned_appended: " << s2 << endl;
+	cout << endl;	
+	int cnt_indel = 0;
+	int i, j;
+	for(; pos>=0; pos--){		
+		cout << "***Examined Position: " << s1[pos] << " " << s2[pos] << endl;
+		if(s1[pos]!=s2[pos]) continue;	// condition 1
+		if(s1[pos+1]==s2[pos+1]) continue; // condition 2
+		
+		cout << "***Examined Strings" << endl;
+		for(i=-(b-1)/2; i<=(b-1)/2; i++){		
+			cout << s1[pos+i];
+		} cout << endl;
+		
+		for(i=-(b-1)/2; i<=(b-1)/2; i++){		
+			cout << s2[pos+i];
+		} cout << endl;
+		
+		
+		cnt_indel = 0;
+		for(i=-(b-1)/2; i<=(b-1)/2; i++){		
+			if(s1[pos+i]!=s2[pos+i]) cnt_indel++;
+		}
+		if(cnt_indel>=a){
+			cout << "***STOP POSITION FOUND cnt_indel = " << cnt_indel << endl;
+			break;
+		}
+		
+	}
+	cout << endl;
+	return 0;
 }
 
 pair<string, string> ALIGN(string s1, string s2){
