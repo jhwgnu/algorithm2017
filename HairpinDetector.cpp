@@ -15,25 +15,27 @@ void PRINT_IF_HAIRPIN(int, int, int, int, int, int);
 pair<int**, int**> LCS_LENGTH(string, string);
 void PRINT_LCS(int**, string, string, int, int, string*, string*);
 pair<string, string> ALIGN(string, string);
-int STOP_POSITION(string, string, string);
+bool CHECK_OUTER_PART(string, string, string);
+bool CHECK_INNER_PART(string, string, string);
 
 string seq = "";
 
-static int N = 10000;
-static int k = 8;
+static int N = 100;
+static int k = 4;
 static int a = 4;
-static int b = 9;
-static int MIN_hairpin = 40;
-static int MAX_hairpin = 50;
-static int MAX_loop = 20;
+static int b = 5;
+//static int MIN_hairpin = 40;
+static int MAX_hairpin = 30;
+static int MAX_loop = 15;
 
 	
 int main() {
-
+	cout<< "compile test"<<endl;
 	int s1,e1,s2,e2,cand_start,cand_end;
 	pair<int, int> cand_region;
 	
-	CREATE_RANDOM_SEQ();		
+	CREATE_RANDOM_SEQ();
+//	seq = "ASDASDASDASDASDASDTGGACGTGTATTGGCCAGGAADSADASDASDADASDASDASDASDASDAD"	;
 		
 	for(s1=0; s1<=N-2*k; s1++){
 		e1 = s1+k-1;
@@ -81,49 +83,57 @@ void PRINT_IF_HAIRPIN(int cs, int ce, int s1, int e1, int s2, int e2){
 	cout << "SL_aligned:   " << SL_aligned << endl;	
 	cout << "SR_R_aligned: " << SR_R_aligned << endl;	
 	
-	int STOP_POS = STOP_POSITION(SL_aligned, SR_R_aligned, KMER);
+	CHECK_OUTER_PART(SL_aligned, SR_R_aligned, KMER);
 	
 	cout <<endl<<endl;	
 	return;
 }
 
-int STOP_POSITION(string s1, string s2, string kmer){	
+bool CHECK_OUTER_PART(string s1, string s2, string kmer){
+	bool satisfied = false;
+	bool stop_pos_found = false;
 	cout << endl;
-	int pos = s1.length()-2;
+	int pos = s1.length()-2;		
 	s1.append(kmer);
 	s2.append(kmer);
 	cout << "SL_aligned_appended:   " << s1 << endl;
 	cout << "SR_R_aligned_appended: " << s2 << endl;
+	
 	cout << endl;	
 	int cnt_indel = 0;
 	int i, j;
 	for(; pos>=0; pos--){		
 		cout << "***Examined Position: " << s1[pos] << " " << s2[pos] << endl;
-		if(s1[pos]!=s2[pos]) continue;	// condition 1
 		if(s1[pos+1]==s2[pos+1]) continue; // condition 2
+		if(s1[pos]!=s2[pos]) continue;	// condition 1		
 		
 		cout << "***Examined Strings" << endl;
-		for(i=-(b-1)/2; i<=(b-1)/2; i++){		
-			cout << s1[pos+i];
+		for(i=-(b-1)/2; i<=(b-1)/2; i++){
+			if(pos+i<0) cout << '@';
+			else cout << s1[pos+i];
 		} cout << endl;
 		
-		for(i=-(b-1)/2; i<=(b-1)/2; i++){		
-			cout << s2[pos+i];
+		for(i=-(b-1)/2; i<=(b-1)/2; i++){
+			if(pos+i<0) cout << '#';
+			else cout << s2[pos+i];
 		} cout << endl;
 		
 		
 		cnt_indel = 0;
-		for(i=-(b-1)/2; i<=(b-1)/2; i++){		
-			if(s1[pos+i]!=s2[pos+i]) cnt_indel++;
-		}
+		for(i=-(b-1)/2; i<=(b-1)/2; i++){
+			if(pos+i<0) cnt_indel++;
+			else if(s1[pos+i]!=s2[pos+i]) cnt_indel++;
+		}		
 		if(cnt_indel>=a){
 			cout << "***STOP POSITION FOUND cnt_indel = " << cnt_indel << endl;
+			stop_pos_found = true;
 			break;
 		}
-		
 	}
+	if(stop_pos_found) return false;
+	cout << "¿ÞÂÊÀº PASS!" <<endl;
 	cout << endl;
-	return 0;
+	return true;
 }
 
 pair<string, string> ALIGN(string s1, string s2){
@@ -252,8 +262,8 @@ int FIND_PALINDROME(int s1){
 
 pair<int, int> CALC_CAND_REGION(int s1, int e2){
 	int c_start, c_end;
-	c_start = s1 - (400-(e2-s1+1))/2;
-	c_end = e2 + (400-(e2-s1+1))/2;	
+	c_start = s1 - (MAX_hairpin-(e2-s1+1))/2;
+	c_end = e2 + (MAX_hairpin-(e2-s1+1))/2;	
 	if(c_start < 0){
 		c_start = 0;
 		c_end = e2 + s1;
