@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <utility>
+#include <algorithm>
 
 using namespace std;
  
@@ -12,8 +13,11 @@ pair<string, string> ALIGN(string, string);
 
 int main()
 {	
-	string s1 = "GCACGATAGATATACGATAATTA";
-	string s2 = "TCGAGTGTGACAGAGATGGGATT";
+	string s1 = "ATTCTGCTATTTGTGGCGTATTTTCGCGCAGCCTGGTAGTTGGCTTGCCGTATCGGTTATGTCCGTACGCCTTTTATGGTGTTATCGCCTTAT";
+	string s2(s1);
+	reverse(s2.begin(), s2.end());
+	cout << s1 << endl;
+	cout << s2 << endl;
 		
 	pair<string, string> result = ALIGN(s1,s2);
 	string s1_result = result.first;
