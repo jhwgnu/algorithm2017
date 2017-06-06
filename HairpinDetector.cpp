@@ -16,25 +16,25 @@ bool FIND_HAIRPIN(int, int, int, int, int, int);
 pair<int**, int**> LCS_LENGTH(string, string);
 void PRINT_LCS(int**, string, string, int, int, string*, string*);
 pair<string, string> ALIGN(string, string);
-pair<int, int> CHECK_OUTER_PART(string, string, string, int);
-pair<int, int> CHECK_INNER_PART(string, string, string, int);
+pair<int, int> CHECK_OUTER_PART(string, string, string, int, string*);
+pair<int, int> CHECK_INNER_PART(string, string, string, int, string*);
 
 string seq = "";
 
-//static int N = 100;
-//static int k = 4;
-//static int a = 3;
-//static int b = 5;
-//static int MIN_hairpin = 20;
-//static int MAX_hairpin = 30;
-//static int MAX_loop = 15;
+static int N = 100;
+static int k = 4;
+static int a = 3;
+static int b = 5;
+static int MIN_hairpin = 20;
+static int MAX_hairpin = 30;
+static int MAX_loop = 15;
 
-static int k = 10;
-static int a = 4;
-static int b = 9;
-static int MIN_hairpin = 200;
-static int MAX_hairpin = 400;
-static int MAX_loop = 50;
+//static int k = 10;
+//static int a = 4;
+//static int b = 9;
+//static int MIN_hairpin = 200;
+//static int MAX_hairpin = 400;
+//static int MAX_loop = 50;
 	
 int main(int argc, char** argv) {
 //	cout<< "compile test"<<endl;
@@ -42,13 +42,14 @@ int main(int argc, char** argv) {
 	pair<int, int> cand_region;
 	
 //	CREATE_RANDOM_SEQ();
-	ifstream ifs(argv[1]);
-	// ifstream ifs("DNAseq.fasta");
+    seq = "CCGCTTATCTTGTGCCTCCTACAACACGACTATGTGAATAGGCCCGCAAGATAAGGATTATACCGGCAAACCTGTAATAAGGACTGGAGGCTGGTTCCGG";
+
+//	ifstream ifs(argv[1]);	
 //	cout << "DNAseq.fasta" << endl << endl;
-	string headLine;
-	getline(ifs, headLine);
-	string content((istreambuf_iterator<char>(ifs)), (istreambuf_iterator<char>()));
-	seq = content;
+//	string headLine;
+//	getline(ifs, headLine);
+//	string content((istreambuf_iterator<char>(ifs)), (istreambuf_iterator<char>()));
+//	seq = content;
 	
 	
 //	cout <<endl<< "================================================================" << endl;
@@ -86,7 +87,12 @@ bool FIND_HAIRPIN(int cs, int ce, int s1, int e1, int s2, int e2){
 	reverse(SM_R.begin(), SM_R.end());	
 	string SR_R(SR);
 	reverse(SR_R.begin(), SR_R.end());
-		
+
+	string *LCS_left = new string;
+	string *LCS_right = new string;
+	*LCS_left = "";
+	*LCS_right = "";
+			
 //	cout << "SL:   " << SL << endl;
 //	cout << "KMER: " << KMER << endl;
 //	cout << "SM:   " << SM << endl;
@@ -101,7 +107,7 @@ bool FIND_HAIRPIN(int cs, int ce, int s1, int e1, int s2, int e2){
 	string SR_R_aligned = outer_LCS.second;				
 //	cout << "SL_aligned:   " << SL_aligned << endl;	
 //	cout << "SR_R_aligned: " << SR_R_aligned << endl;	
-	pair<int,int> outer_part = CHECK_OUTER_PART(SL_aligned, SR_R_aligned, KMER, s1);
+	pair<int,int> outer_part = CHECK_OUTER_PART(SL_aligned, SR_R_aligned, KMER, s1, LCS_left);
 	int leftarm_left = outer_part.first;
 	int rightarm_right = outer_part.second;	
 	
@@ -111,7 +117,7 @@ bool FIND_HAIRPIN(int cs, int ce, int s1, int e1, int s2, int e2){
 	string SM_R_aligned = inner_LCS.second;				
 //	cout << "SM_aligned:   " << SM_aligned << endl;	
 //	cout << "SM_R_aligned: " << SM_R_aligned << endl;	
-	pair<int,int> inner_part = CHECK_INNER_PART(SM_aligned, SM_R_aligned, KMER, e1);
+	pair<int,int> inner_part = CHECK_INNER_PART(SM_aligned, SM_R_aligned, KMER, e1, LCS_right);
 	int leftarm_right = inner_part.first;
 	int rightarm_left = inner_part.second;
 
@@ -140,17 +146,18 @@ bool FIND_HAIRPIN(int cs, int ce, int s1, int e1, int s2, int e2){
 //		printf("loop 길이 범위: %d ~ %d\n",0,MAX_loop);
 //		printf("loop 길이 범위 벗어남: %d\n", loop_length);
 		return false;		
-	}	
-//	cout << "<hairpin>" << endl;
+	}
+	cout << "<hairpin>" << endl;
 	cout << seq.substr(s1-leftarm_left, h_length) << endl;
-//	cout << "<LCS sequence>" << endl;
-	cout << seq.substr(s1-leftarm_left, leftarm_left+k+leftarm_right) << endl;
-//	cout << "<loop> "<< endl;
+	cout << "<LCS sequence>" << endl;
+	cout << *LCS_left << KMER << *LCS_right << endl;
+//	cout << seq.substr(s1-leftarm_left, leftarm_left+k+leftarm_right) << endl;
+	cout << "<loop> "<< endl;
 	cout << seq.substr(e1+leftarm_right+1, loop_length) << endl << endl;
 	return true;
 }
 
-pair<int, int> CHECK_INNER_PART(string s1, string s2, string kmer, int kmer_end){	
+pair<int, int> CHECK_INNER_PART(string s1, string s2, string kmer, int kmer_end, string* LCS_right){	
 	string SM_aligned = s1;
 	string SM_R_aligned = s2;
 	int leftarm_right = 0;
@@ -206,13 +213,16 @@ pair<int, int> CHECK_INNER_PART(string s1, string s2, string kmer, int kmer_end)
 		}
 		for(i=k; i<=recent_match; i++){
 			if(s2[i] != '-') rightarm_left++;
+		}
+		for(i=k; i<=recent_match; i++){
+			if(s1[i] == s2[i]) *LCS_right += s1[i];
 		}		
 		return make_pair(leftarm_right,rightarm_left);
 	} else return make_pair(0,0);
 	
 }
 
-pair<int, int> CHECK_OUTER_PART(string s1, string s2, string kmer, int kmer_start){	
+pair<int, int> CHECK_OUTER_PART(string s1, string s2, string kmer, int kmer_start, string* LCS_left){	
 	string SL_aligned = s1;
 	string SR_R_aligned = s2;
 	int leftarm_left = 0;
@@ -232,23 +242,23 @@ pair<int, int> CHECK_OUTER_PART(string s1, string s2, string kmer, int kmer_star
 	int i, j;
 	for(; pos>=0; pos--){		
 		
-		cout << "***Examined Position: " <<pos << " " << s1[pos] << " " << s2[pos] << endl;
+//		cout << "***Examined Position: " <<pos << " " << s1[pos] << " " << s2[pos] << endl;
 		if(s1[pos+1]==s2[pos+1]){ // condition 2
 			if(s1[pos]==s2[pos]) recent_match = pos;
 			continue; 
 		}
 		if(s1[pos]!=s2[pos]) continue;	// condition 1		
 		
-		cout << "***Examined Strings" << endl;
-		for(i=-(b-1)/2; i<=(b-1)/2; i++){
-			if(pos+i<0) cout << '@';
-			else cout << s1[pos+i];
-		} cout << endl;
-		
-		for(i=-(b-1)/2; i<=(b-1)/2; i++){
-			if(pos+i<0) cout << '#';
-			else cout << s2[pos+i];
-		} cout << endl;		
+//		cout << "***Examined Strings" << endl;
+//		for(i=-(b-1)/2; i<=(b-1)/2; i++){
+//			if(pos+i<0) cout << '@';
+//			else cout << s1[pos+i];
+//		} cout << endl;
+//		
+//		for(i=-(b-1)/2; i<=(b-1)/2; i++){
+//			if(pos+i<0) cout << '#';
+//			else cout << s2[pos+i];
+//		} cout << endl;		
 		
 		cnt_indel = 0;
 		for(i=-(b-1)/2; i<=(b-1)/2; i++){
@@ -272,6 +282,9 @@ pair<int, int> CHECK_OUTER_PART(string s1, string s2, string kmer, int kmer_star
 		}
 		for(i=recent_match; i<SR_R_aligned.length(); i++){
 			if(SR_R_aligned[i] != '-') rightarm_right++;
+		}
+		for(i=recent_match; i<SR_R_aligned.length(); i++){
+			if(SL_aligned[i] == SR_R_aligned[i]) LCS_left += SL_aligned[i];
 		}
 //		cout << "leftarm_left = " << leftarm_left << endl;
 //		cout << "rightarm_right = " << rightarm_right << endl;
