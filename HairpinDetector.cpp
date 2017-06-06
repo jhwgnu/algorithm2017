@@ -18,41 +18,42 @@ void PRINT_LCS(int**, string, string, int, int, string*, string*);
 pair<string, string> ALIGN(string, string);
 pair<int, int> CHECK_OUTER_PART(string, string, string, int, string*);
 pair<int, int> CHECK_INNER_PART(string, string, string, int, string*);
+//bool CHECK_LENGTH
 
 string seq = "";
 
-static int N = 100;
-static int k = 4;
-static int a = 3;
-static int b = 5;
-static int MIN_hairpin = 20;
-static int MAX_hairpin = 30;
-static int MAX_loop = 15;
+//static int N = 100;
+//static int k = 4;
+//static int a = 3;
+//static int b = 5;
+//static int MIN_hairpin = 20;
+//static int MAX_hairpin = 40;
+//static int MAX_loop = 20;
 
-//static int k = 10;
-//static int a = 4;
-//static int b = 9;
-//static int MIN_hairpin = 200;
-//static int MAX_hairpin = 400;
-//static int MAX_loop = 50;
-	
+static int k = 10;
+static int a = 4;
+static int b = 9;
+static int MIN_hairpin = 200;
+static int MAX_hairpin = 400;
+static int MAX_loop = 50;
+
+//static string LCS_left = "";
+//static string LCS_right = "";
 int main(int argc, char** argv) {
-//	cout<< "compile test"<<endl;
+	cout<< "compile test"<<endl;
 	int s1,e1,s2,e2,cand_start,cand_end;
 	pair<int, int> cand_region;
 	
 //	CREATE_RANDOM_SEQ();
-    seq = "CCGCTTATCTTGTGCCTCCTACAACACGACTATGTGAATAGGCCCGCAAGATAAGGATTATACCGGCAAACCTGTAATAAGGACTGGAGGCTGGTTCCGG";
-
-//	ifstream ifs(argv[1]);	
-//	cout << "DNAseq.fasta" << endl << endl;
-//	string headLine;
-//	getline(ifs, headLine);
-//	string content((istreambuf_iterator<char>(ifs)), (istreambuf_iterator<char>()));
-//	seq = content;
+//	seq = "CCGCTTATCTTGTGCCTCCTACAACACGACTATGTGAATAGGCCCGCAAGATAAGGATTATACCGGCAAACCTGTAATAAGGACTGGAGGCTGGTTCCGG";
+	ifstream ifs(argv[1]);
+	string headLine;
+	getline(ifs, headLine);
+	string content((istreambuf_iterator<char>(ifs)), (istreambuf_iterator<char>()));
+	seq = content;
 	
 	
-//	cout <<endl<< "================================================================" << endl;
+	cout <<endl<< "================================================================" << endl;
 	for(s1=0; s1<=seq.length()-2*k; s1++){		
 		e1 = s1+k-1;
 		s2 = FIND_PALINDROME(s1);		
@@ -63,14 +64,14 @@ int main(int argc, char** argv) {
 		cand_start = cand_region.first;
 		cand_end = cand_region.second;
 		
-		
 //		cout << "candidate region: " << seq.substr(cand_start, cand_end-cand_start+1);
 //		printf("[%d-%d]\n",cand_start,cand_end);
 	
-		bool result = FIND_HAIRPIN(cand_start, cand_end, s1, e1, s2, e2);
-		if(result)s1 = cand_end+1;
+		bool found = FIND_HAIRPIN(cand_start, cand_end, s1, e1, s2, e2);
+		if(found) s1 = cand_end+1;
+//		s1 = cand_end+1;
 	
-//		cout <<endl<< "================================================================" << endl << endl;
+		cout <<endl<< "================================================================" << endl << endl;
 	}
 }
 
@@ -87,19 +88,19 @@ bool FIND_HAIRPIN(int cs, int ce, int s1, int e1, int s2, int e2){
 	reverse(SM_R.begin(), SM_R.end());	
 	string SR_R(SR);
 	reverse(SR_R.begin(), SR_R.end());
-
-	string *LCS_left = new string;
-	string *LCS_right = new string;
-	*LCS_left = "";
-	*LCS_right = "";
-			
+		
 //	cout << "SL:   " << SL << endl;
 //	cout << "KMER: " << KMER << endl;
 //	cout << "SM:   " << SM << endl;
 //	cout << "SM_R: " << SM_R << endl;
 //	cout << "SR:   " << SR << endl;			
 //	cout << "SR_R: " << SR_R << endl;	
-//	cout << endl;
+	cout << endl;
+	
+	string *LCS_left = new string;
+	string *LCS_right = new string;
+	*LCS_left = "";
+	*LCS_right = "";	
 	
 //	cout << endl << "##Check outer part" << endl;
 	pair<string, string> outer_LCS = ALIGN(SL,SR_R);
@@ -120,40 +121,52 @@ bool FIND_HAIRPIN(int cs, int ce, int s1, int e1, int s2, int e2){
 	pair<int,int> inner_part = CHECK_INNER_PART(SM_aligned, SM_R_aligned, KMER, e1, LCS_right);
 	int leftarm_right = inner_part.first;
 	int rightarm_left = inner_part.second;
+	
+//	cout << "[DEBUG] LCS_left : " << *LCS_left << endl;
+//	cout << "[DEBUG] LCS_right : " << *LCS_right << endl;
 
 //	cout << "leftarm_left = " << leftarm_left << endl;
-//	cout << "rightarm_right = " << rightarm_right << endl;		
-//	cout << "leftarm_right = " << leftarm_right << endl;
-//	cout << "rightarm_left = " << rightarm_left << endl;	
+//	cout << "rightarm_right = " << rightarm_right << endl;
+	cout << "s2 = "	 << s2 <<endl;
+	cout << "e1 = " << e1 <<endl;
+	cout << "leftarm_right = " << leftarm_right << endl;
+	cout << "rightarm_left = " << rightarm_left << endl;	
 			
 	// MIN_hairpin <= whole hairpin length <= MAX_hairpin
 	int h_start = s1-leftarm_left;
 	int h_end = e2+rightarm_right;
 	int h_length = h_end - h_start + 1;
+
+	int loop_length = (s2-e1-1)-leftarm_right-rightarm_left;
+	if(loop_length <= 0){
+		loop_length = 0;
+		// *LCS_right = seq.substr(e1+1, s2-e1+1);
+	}
 	
-//	printf("hairpin 길이: %d\n", h_length);
+	cout << "LCS_left: " << *LCS_left << endl;
+	cout << "LCS_right: " << *LCS_right << endl <<endl;
+
+	cout << "hairpin: " << seq.substr(s1-leftarm_left, h_length) << endl;
+	cout << "LCS sequence: " << *LCS_left << KMER << *LCS_right << endl;
+	cout << "loop: " << seq.substr(e1+leftarm_right+1, loop_length) << endl << endl;
+	
 	if(h_length < MIN_hairpin || h_length > MAX_hairpin){
-//		printf("hairpin 길이 범위: %d ~ %d\n",MIN_hairpin,MAX_hairpin);
-//		printf("hairpin 길이 범위 벗어남: %d\n", h_length);
+		printf("hairpin boundary: %d ~ %d\n",MIN_hairpin,MAX_hairpin);
+		printf("hairpin length: %d\n", h_length);
 		return false;	
 	}
-	
-	// 0 <= loop length <= MAX_loop
-	
-	int loop_length = (s2-e1-1)-leftarm_right-rightarm_left;
-//	printf("loop 길이: %d\n", loop_length);
+		
+		
 	if(loop_length < 0 || loop_length > MAX_loop){
-//		printf("loop 길이 범위: %d ~ %d\n",0,MAX_loop);
-//		printf("loop 길이 범위 벗어남: %d\n", loop_length);
+		printf("loop boundary: %d ~ %d\n",0,MAX_loop);
+		printf("loop length: %d\n", loop_length);
 		return false;		
 	}
-	cout << "<hairpin>" << endl;
-	cout << seq.substr(s1-leftarm_left, h_length) << endl;
-	cout << "<LCS sequence>" << endl;
-	cout << *LCS_left << KMER << *LCS_right << endl;
-//	cout << seq.substr(s1-leftarm_left, leftarm_left+k+leftarm_right) << endl;
-	cout << "<loop> "<< endl;
-	cout << seq.substr(e1+leftarm_right+1, loop_length) << endl << endl;
+	cout << "*******hairpin Found*******" <<endl;
+	// cout << "hairpin: " << seq.substr(s1-leftarm_left, h_length) << endl;
+	// cout << "LCS sequence: " << *LCS_left << KMER << *LCS_right << endl;
+	// cout << "loop: " << seq.substr(e1+leftarm_right+1, loop_length) << endl;
+	
 	return true;
 }
 
@@ -163,35 +176,37 @@ pair<int, int> CHECK_INNER_PART(string s1, string s2, string kmer, int kmer_end,
 	int leftarm_right = 0;
 	int rightarm_left = 0;
 	
+//	string LCS_right = "";
+	
 	bool stop_pos_found = false;
 	int recent_match = -1; 
 	int pos = kmer.length();
 	string kmer_temp(kmer);
 	s1 = kmer.append(s1);
 	s2 = kmer_temp.append(s2);	
-//	cout << "SM_aligned_appended:   " << s1 << endl;
-//	cout << "SM_R_aligned_appended: " << s2 << endl;
+	cout << "SM_aligned_appended:   " << s1 << endl;
+	cout << "SM_R_aligned_appended: " << s2 << endl;
 		
 	int cnt_indel = 0;
 	int i, j;
 	for(; pos<s1.length(); pos++){		
-//		cout << "***Examined Position: " <<pos << " "<< s1[pos] << " " << s2[pos] << endl;
+		cout << "***Examined Position: " <<pos << " "<< s1[pos] << " " << s2[pos] << endl;
 		
 		if(s1[pos-1]==s2[pos-1]){ // condition 2
 			if(s1[pos]==s2[pos]) recent_match = pos;
 			continue; 
 		}
 		if(s1[pos]!=s2[pos]) continue;	// condition 1				
-//		cout << "***Examined Strings" << endl;
-//		for(i=-(b-1)/2; i<=(b-1)/2; i++){
-//			if(pos+i>=s1.length()) cout << '@';
-//			else cout << s1[pos+i];
-//		} cout << endl;
-//		
-//		for(i=-(b-1)/2; i<=(b-1)/2; i++){
-//			if(pos+i>=s1.length()) cout << '#';
-//			else cout << s2[pos+i];
-//		} cout << endl;		
+		cout << "***Examined Strings" << endl;
+		for(i=-(b-1)/2; i<=(b-1)/2; i++){
+			if(pos+i>=s1.length()) cout << '@';
+			else cout << s1[pos+i];
+		} cout << endl;
+		
+		for(i=-(b-1)/2; i<=(b-1)/2; i++){
+			if(pos+i>=s1.length()) cout << '#';
+			else cout << s2[pos+i];
+		} cout << endl;		
 		
 		cnt_indel = 0;
 		for(i=-(b-1)/2; i<=(b-1)/2; i++){			
@@ -203,8 +218,10 @@ pair<int, int> CHECK_INNER_PART(string s1, string s2, string kmer, int kmer_end,
 			stop_pos_found = true;
 			break;	
 		}
-		if(s1[pos]==s2[pos]) recent_match = pos;
-//		cout << "!!!!TEST" << s1[pos] << " " << s2[pos] << endl;				
+		if(s1[pos]==s2[pos]) {
+			recent_match = pos;
+		}
+				
 	}			
 	if(stop_pos_found){
 		if(recent_match < 0) return make_pair(0,0);
@@ -216,7 +233,8 @@ pair<int, int> CHECK_INNER_PART(string s1, string s2, string kmer, int kmer_end,
 		}
 		for(i=k; i<=recent_match; i++){
 			if(s1[i] == s2[i]) *LCS_right += s1[i];
-		}		
+		}
+		cout << "LCS_right: " << *LCS_right << endl;
 		return make_pair(leftarm_right,rightarm_left);
 	} else return make_pair(0,0);
 	
@@ -227,6 +245,8 @@ pair<int, int> CHECK_OUTER_PART(string s1, string s2, string kmer, int kmer_star
 	string SR_R_aligned = s2;
 	int leftarm_left = 0;
 	int rightarm_right = 0;
+	
+//	string LCS_left = "";
 		
 	int recent_match = -1;	
 	bool stop_pos_found = false;
@@ -270,9 +290,9 @@ pair<int, int> CHECK_OUTER_PART(string s1, string s2, string kmer, int kmer_star
 			stop_pos_found = true;
 			break;
 		}
-		if(s1[pos]==s2[pos]) recent_match = pos;
+		if(s1[pos]==s2[pos]) recent_match = pos;		
 	}
-
+	cout << endl;		
 	if(stop_pos_found) {
 		if(recent_match < 0) return make_pair(0,0);
 //		cout << "recent_match = " << recent_match << endl;
@@ -283,9 +303,15 @@ pair<int, int> CHECK_OUTER_PART(string s1, string s2, string kmer, int kmer_star
 		for(i=recent_match; i<SR_R_aligned.length(); i++){
 			if(SR_R_aligned[i] != '-') rightarm_right++;
 		}
+		
+//		cout << "LCS_left: " << *LCS_left << endl;
 		for(i=recent_match; i<SR_R_aligned.length(); i++){
-			if(SL_aligned[i] == SR_R_aligned[i]) LCS_left += SL_aligned[i];
+//			cout << "[DEBUG] " << i;			
+//			printf("[DEBUG] SL_aligned[i] = %c ",SL_aligned[i]);
+//			printf("[DEBUG] SR_R_aligned[i] = %c\n",SR_R_aligned[i]);
+			if(SL_aligned[i] == SR_R_aligned[i]) *LCS_left += SL_aligned[i];
 		}
+//		cout << "LCS_left: " << *LCS_left << endl;
 //		cout << "leftarm_left = " << leftarm_left << endl;
 //		cout << "rightarm_right = " << rightarm_right << endl;
 		return make_pair(leftarm_left, rightarm_right);
@@ -404,10 +430,10 @@ int FIND_PALINDROME(int s1){
 		}
 		//continue 안 당하고 여기까지 왔으면 짝 찾은거임 
 		found = true;
-//		cout<<seq.substr(s1,k)<<" ";
-//		printf("[%d-%d] ",s1,s1+k-1);		
-//		cout << seq.substr(s2,k);			
-//		printf(" [%d-%d] \n",s2,e2);
+		cout<<seq.substr(s1,k)<<" ";
+		printf("[%d-%d] ",s1,s1+k-1);		
+		cout << seq.substr(s2,k);			
+		printf(" [%d-%d] \n",s2,e2);
 		break; // 짝 하나 찾으면 끝내도 됨 
 	}	
 	
@@ -433,10 +459,10 @@ pair<int, int> CALC_CAND_REGION(int s1, int e2){
 }
 
 void CREATE_RANDOM_SEQ(){
-	int N = 100;
+//	int N = 100;
 	srand(time(NULL));	
 	char nucleotide[4] = {'A','C','T','G'};	
-	for(int i=0; i<N; i++)	{		
+	for(int i=0; i<seq.length(); i++)	{		
 		seq += nucleotide[rand()%4];
 	}	
 	cout << seq << endl;	
